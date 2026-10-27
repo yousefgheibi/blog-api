@@ -43,7 +43,7 @@ export class ArticlesService {
     };
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, userId?: number) {
     const article = await this.prisma.article.findUnique({
       where: { id },
     });
@@ -52,20 +52,27 @@ export class ArticlesService {
       throw new NotFoundException('Article not found');
     }
 
+    if (!article.published && article.authorId !== userId) {
+      throw new NotFoundException('Article not found');
+    }
+
     return article;
   }
 
-  async create(createArticleDto: CreateArticleDto) {
+  async create(dto: CreateArticleDto, authorId: number) {
     return this.prisma.article.create({
-      data: createArticleDto,
+      data: {
+        ...dto,
+        authorId,
+      },
     });
   }
 
-  async update(id: number, updateArticleDto: UpdateArticleDto) {
+  async update(id: number, dto: UpdateArticleDto, authorId: number) {
     try {
       return await this.prisma.article.update({
-        where: { id },
-        data: updateArticleDto,
+        where: { id, authorId },
+        data: dto,
       });
     } catch (error) {
       if (
@@ -79,10 +86,10 @@ export class ArticlesService {
     }
   }
 
-  async remove(id: number) {
+  async remove(id: number, authorId: number) {
     try {
       await this.prisma.article.delete({
-        where: { id },
+        where: { id, authorId },
       });
 
       return { message: 'Article deleted successfully' };
