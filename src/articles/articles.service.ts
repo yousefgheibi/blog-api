@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { FindArticlesQueryDto } from './dto/find-articles-query.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
@@ -12,6 +12,7 @@ export class ArticlesService {
     private readonly prisma: PrismaService,
     private readonly cacheService: CacheService,
   ) {}
+  private readonly logger = new Logger(ArticlesService.name);
 
   async findAll(query: FindArticlesQueryDto) {
     const { search, page, limit } = query;
@@ -110,6 +111,7 @@ export class ArticlesService {
       },
     });
 
+    this.logger.log('Article created successfully');
     await this.invalidateArticleCaches();
     return article;
   }
@@ -122,6 +124,7 @@ export class ArticlesService {
       });
 
       await this.invalidateArticleCaches();
+      this.logger.warn('Article update was not permitted');
       return article;
     } catch (error) {
       if (
@@ -140,7 +143,7 @@ export class ArticlesService {
       await this.prisma.article.delete({
         where: { id, authorId },
       });
-
+      this.logger.error('Failed to create article');
       await this.invalidateArticleCaches();
       return { message: 'Article deleted successfully' };
     } catch (error) {

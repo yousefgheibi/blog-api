@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConflictException, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import * as argon2 from 'argon2';
@@ -11,6 +11,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
   ) {}
+  private readonly logger = new Logger(AuthService.name);
 
   async register(dto: RegisterDto) {
     const email = dto.email.trim().toLowerCase();
@@ -41,6 +42,7 @@ export class AuthService {
       },
     });
 
+    this.logger.log('user registerd successfully');
     return user;
   }
 
@@ -70,6 +72,7 @@ export class AuthService {
       role: user.role,
     });
 
+    this.logger.log('user loginned successfully');
     return {
       assesToken,
       tokenType: 'Bearer',
